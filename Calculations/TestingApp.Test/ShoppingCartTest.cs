@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,45 +8,45 @@ using TestingApp.Functionality;
 
 namespace TestingApp.Test
 {
-    public class DBServiceMock : IDbService
-    {
-        public bool ProcessResult { get; set; }
-        public Product ProductBeingProcessed { get; set; }
-        public int ProductIdBeingProcessed { get; set; }
+    //public class DBServiceMock : IDbService
+    //{
+    //    public bool ProcessResult { get; set; }
+    //    public Product ProductBeingProcessed { get; set; }
+    //    public int ProductIdBeingProcessed { get; set; }
 
-        public bool RemoveItemFromShoppingCart(int? prodId)
-        {
-            if(prodId == null)
-            {
-                return false;
+    //    public bool RemoveItemFromShoppingCart(int? prodId)
+    //    {
+    //        if(prodId == null)
+    //        {
+    //            return false;
                 
-            }
+    //        }
             
-            ProductIdBeingProcessed = Convert.ToInt32(prodId);
-            return true;
-        }
+    //        ProductIdBeingProcessed = Convert.ToInt32(prodId);
+    //        return true;
+    //    }
 
-        public bool SaveItemToShoppingCart(Product? prod)
-        {
-            if(prod == null)
-            {
-                return false;
-            }
+    //    public bool SaveItemToShoppingCart(Product? prod)
+    //    {
+    //        if(prod == null)
+    //        {
+    //            return false;
+    //        }
 
-            ProductBeingProcessed = prod;
-            return true;
-        }
-    }
+    //        ProductBeingProcessed = prod;
+    //        return true;
+    //    }
+    //}
 
     public class ShoppingCartTest
     {
+        public readonly Mock<IDbService> _dbServiceMock = new();
+
         [Fact]
         public void AddProduct_Success()
         {
             // Given
-            var dbMock = new DBServiceMock();
-            dbMock.ProcessResult = true;
-            var shoppingCart = new ShoppingCart(dbMock);
+            var shoppingCart = new ShoppingCart(_dbServiceMock.Object);
 
             // When
             var product = new Product(1, "shoes", 150);
@@ -53,34 +54,28 @@ namespace TestingApp.Test
 
             // Then
             Assert.True(result);
-            Assert.Equal(result, dbMock.ProcessResult);
-            Assert.Equal("shoes", dbMock.ProductBeingProcessed.Name);
+            _dbServiceMock.Verify(x => x.SaveItemToShoppingCart(It.IsAny<Product>()), Times.Once);
         }
 
         [Fact]
         public void AddProduct_Failure_DueToInvalidPayload()
         {
             // Given
-            var dbMock = new DBServiceMock();
-            dbMock.ProcessResult = false;
-            var shoppingCart = new ShoppingCart(dbMock);
+            var shoppingCart = new ShoppingCart(_dbServiceMock.Object);
 
             // When
             var result = shoppingCart.AddProduct(null);
 
             // Then
             Assert.False(result);
-            Assert.Equal(result, dbMock.ProcessResult);
+            _dbServiceMock.Verify(x => x.SaveItemToShoppingCart(It.IsAny<Product>()), Times.Never);
         }
 
         [Fact]
         public void RemoveProduct_Success()
         {
             // Given
-            var dbMock = new DBServiceMock();
-            dbMock.ProcessResult = true;
-
-            var shoppingCart = new ShoppingCart(dbMock);
+            var shoppingCart = new ShoppingCart(_dbServiceMock.Object);
 
             // When
             var product = new Product(1, "shoes", 150);
@@ -90,7 +85,7 @@ namespace TestingApp.Test
 
             // Then
             Assert.True(deleteResult);
-            Assert.Equal(deleteResult, dbMock.ProcessResult);
+            _dbServiceMock.Verify(x => x.RemoveItemFromShoppingCart(It.IsAny<Int32>()), Times.Once);
         }
     }
 }
