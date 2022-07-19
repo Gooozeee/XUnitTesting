@@ -10,8 +10,8 @@ namespace TestingApp.Functionality
 
     public interface IDbService
     {
-        bool SaveItemToShoppingCart(Product prod);
-        bool RemoveItemFromShoppingCart(int prodId);
+        bool SaveItemToShoppingCart(Product? prod);
+        bool RemoveItemFromShoppingCart(int? prodId);
     }
 
     public class ShoppingCart
